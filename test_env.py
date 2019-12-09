@@ -1,17 +1,8 @@
-import cv2
+from envs import create_atari_env
 import gym
-import numpy as np
 from gym.spaces.box import Box
-
-
-# Taken from https://github.com/openai/universe-starter-agent
-def create_atari_env(env_id):
-    env = gym.make(env_id)
-    env = AtariRescale42x42(env)
-    env = NormalizedEnv(env)
-    return env
-
-
+import cv2
+import numpy as np
 def _process_frame42(frame):
     frame = frame[34:34 + 160, :160]
     # Resize by half, then down to 42x42 (essentially mipmapping). If
@@ -24,15 +15,6 @@ def _process_frame42(frame):
     frame *= (1.0 / 255.0)
     frame = np.moveaxis(frame, -1, 0)
     return frame
-
-
-class AtariRescale42x42(gym.ObservationWrapper):
-    def __init__(self, env=None):
-        super(AtariRescale42x42, self).__init__(env)
-        self.observation_space = Box(0.0, 1.0, [1, 42, 42])
-
-    def observation(self, observation):
-        return _process_frame42(observation)
 
 
 class NormalizedEnv(gym.ObservationWrapper):
@@ -54,3 +36,17 @@ class NormalizedEnv(gym.ObservationWrapper):
         unbiased_std = self.state_std / (1 - pow(self.alpha, self.num_steps))
 
         return (observation - unbiased_mean) / (unbiased_std + 1e-8)
+class AtariRescale42x42(gym.ObservationWrapper):
+    def __init__(self, env=None):
+        super(AtariRescale42x42, self).__init__(env)
+        self.observation_space = Box(0.0, 1.0, [1, 42, 42])
+
+    def observation(self, observation):
+        return _process_frame42(observation)
+env_id = "PongDeterministic-v4"
+env = gym.make(env_id)
+env = AtariRescale42x42(env)
+env = NormalizedEnv(env)
+#env = create_atari_env("PongDeterministic-v4")
+env.reset()
+env.render()
