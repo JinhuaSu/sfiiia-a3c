@@ -1,0 +1,44 @@
+
+find a game:
+Street Fighter III Third Strike: Fight for the Future (Japan 990608, NO CD)
+it first was called sfiii3an,zip later it was changed name into sfiii3n.zip
+
+
+https://www.ppxclub.com/69785-1-1
+990608
+game (
+        name sfiii3an
+        description "Street Fighter III 3rd Strike: Fight for the Future (Japan, 990608, NO CD)"
+        year 1999
+        manufacturer "Capcom"
+        cloneof sfiii3
+        romof sfiii3
+        rom ( name sfiii3_japan_nocd.29f400.u2 size 524288 crc 1edc6366 )
+
+http://cnc.ppxclub.com/forum/18760-1-1
+
+        rom ( name 10 size 8388608 crc ba7f76b2 )
+        rom ( name 20 size 8388608 crc 5ca8faba )
+        rom ( name 30 size 8388608 crc b37cf960 )
+        rom ( name 31 size 8388608 crc 450ec982 )
+        rom ( name 40 size 8388608 crc 632c965f )
+        rom ( name 41 size 8388608 crc 7a4c5f33 )
+        rom ( name 50 size 8388608 crc 8562358e )
+        rom ( name 51 size 8388608 crc 7baf234b )
+        rom ( name 60 size 8388608 crc bc9487b7 )
+        rom ( name 61 size 8388608 crc b813a1b1 )
+)
+https://www.ppxclub.com/606090-1-1
+1 记得首次正式加入MAME是0.116u4，990512和990608的no cd名字分别是sfiii3n.zip和sfiii3an.zip
+
+2 后来改过一次 把sfiii3an改成了990512 把sfiii3n改成了990608
+
+3 再后来一次把roms分割为小的文件
+
+4 最后一次把名字又改了 990512改为sfiii3nr1.zip 990608改为sfiii3n.zip
+
+求每次更新对应的MAME版本号
+
+求每次更新所对应的ROMS
+
+谢谢！
