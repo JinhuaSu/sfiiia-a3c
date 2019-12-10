@@ -25,7 +25,9 @@ python main.py
 | 2019-12-15 | first demo |  |
 
 **urgent**
-find a game and download it. detail can be seen in the ./src/env/search.txt
+*find a game and download it. detail can be seen in the ./src/env/search.txt*
+done in 2019-12-10:01:09
+
 
 **to-do-list**
 
