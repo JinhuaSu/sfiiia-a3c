@@ -42,6 +42,8 @@ parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--use_gpu', default=False,
                     help='use an optimizer without shared momentum.')
+parser.add_argument('--play_sf', default=False,
+                    help='use an optimizer without shared momentum.')
 
 
 if __name__ == '__main__':
@@ -53,6 +55,7 @@ if __name__ == '__main__':
     shared_model = ActorCritic(
         env.observation_space.shape[0], env.action_space)
     shared_model.share_memory()
+
 
     if args.no_shared:
         optimizer = None

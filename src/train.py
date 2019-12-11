@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
+from env import Environment
 from env.envs import create_atari_env
 from models.model import ActorCritic
 
@@ -17,10 +18,16 @@ def ensure_shared_grads(model, shared_model):
 def train(rank, args, shared_model, counter, lock, optimizer=None):
     torch.manual_seed(args.seed + rank)
 
-    env = create_atari_env(args.env_name)
-    env.seed(args.seed + rank)
+    if args.play_sf:
+        roms_path = "/home/sujinhua/app/sfiiia-a3c/roms/"  # Replace this with the path to your ROMs
+        env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =False)
+        model = ActorCritic(3, 9+9+1)
+        env.start()
+    else:
+        env = create_atari_env(args.env_name)
+        env.seed(args.seed + rank)
+        model = ActorCritic(env.observation_space.shape[0], env.action_space)
 
-    model = ActorCritic(env.observation_space.shape[0], env.action_space)
 
     if optimizer is None:
         optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
@@ -59,9 +66,12 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             action = prob.multinomial(num_samples=1).detach()
             log_prob = log_prob.gather(1, action)
 
-            state, reward, done, _ = env.step(action.numpy())
+            if args.play_sf:
+                state, reward, round_done, stage_done, game_done = env.step(move_action, attack_action)
+            else:
+                state, reward, done, _ = env.step(action.numpy())
+                reward = max(min(reward, 1), -1)
             done = done or episode_length >= args.max_episode_length
-            reward = max(min(reward, 1), -1)
 
             with lock:
                 counter.value += 1

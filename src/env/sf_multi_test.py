@@ -20,6 +20,6 @@ def run_env(worker_id, roms_path):
 
 workers = 8
 # Environments must be created outside of the threads
-roms_path = "roms/"  # Replace this with the path to your ROMs
+roms_path = "/home/sujinhua/app/sfiiia-a3c/roms/"  # Replace this with the path to your ROMs
 threads = [Process(target=run_env, args=(i, roms_path)) for i in range(workers)]
 [thread.start() for thread in threads]

@@ -25,6 +25,7 @@ python main.py
 | 2019-12-15 | first demo |  |
 
 **urgent**
+
 *find a game and download it. detail can be seen in the ./src/env/search.txt*
 done in 2019-12-10:01:09
 
@@ -37,6 +38,9 @@ done in 2019-12-10:01:09
 | :--: | :--: | :--: | :--: |
 | xx | use tensorboard draw the model graph of a3c | xx |  |
 | x | test another gym game in this code | x | done with Pong-v0 |
-| xxx | use gym class and make the sfiiia as a standard gym | xxx |  |
+| xxx | use gym class and make the sfiiia as a standard gym | xxx | done with sfenvironment |
+| xxxx | most 
 | xxx | write a class py for action(hierarchical) | xx |  | 
 | xxxx | write a class py for reward(hierarchical) | xx |  |
+| x | make the windows can be pretty show | xx |  |
+| xxx | write a python can select different mode so that I can play with the our fighter | xx |  |
