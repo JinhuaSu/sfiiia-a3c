@@ -41,19 +41,30 @@ parser.add_argument('--env-name', default='PongDeterministic-v4',
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--use_gpu', default=False,
-                    help='use an optimizer without shared momentum.')
-parser.add_argument('--play_sf', default=False,
-                    help='use an optimizer without shared momentum.')
+                    help='use gpu to train something')
+parser.add_argument('--play_sf', default=False,type=bool,
+                    help='play sfiii3n')
+parser.add_argument('--roms', default='/ssd/su/sfiiia-a3c/roms/',type=str,
+                    help='dir roms')
+parser.add_argument('--save_per_min', default=30,type=int,
+                    help='train x minutes and save a checkpoint')
+parser.add_argument('--model_path', default='../models/',type=str)
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
     os.environ['OMP_NUM_THREADS'] = '1'
-    os.environ['CUDA_VISIBLE_DEVICES'] = "0" if args.use_gpu else ""
+    os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3" if args.use_gpu else ""
+    os.system("Xvfb :1 -screen 1 800x600x16 +extension RANDR &")
+    os.environ["DISPLAY"] = ":1"
     torch.manual_seed(args.seed)
-    env = create_atari_env(args.env_name)
-    shared_model = ActorCritic(
-        env.observation_space.shape[0], env.action_space)
+    if args.play_sf:
+        print('Play sfiii3n!')
+        shared_model = ActorCritic(3, 9*10)
+    else:
+        env = create_atari_env(args.env_name)
+        shared_model = ActorCritic(
+        env.observation_space.shape[0], env.action_space.n)
     shared_model.share_memory()
 
 
@@ -65,7 +76,7 @@ if __name__ == '__main__':
 
     processes = []
 
-    counter = mp.Value('i', 0)
+    counter = mp.Value('i', 0) #pytorch mutliprocess tool
     lock = mp.Lock()
 
     p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))

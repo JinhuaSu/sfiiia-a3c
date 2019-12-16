@@ -2,7 +2,7 @@ import random
 from Environment import Environment
 
 roms_path = "/home/sujinhua/app/sfiiia-a3c/roms/"  # Replace this with the path to your ROMs
-env = Environment("env1", roms_path,frame_ratio =3,frames_per_step = 1,throttle =False)
+env = Environment("env1", roms_path,frame_ratio =3,frames_per_step = 1,throttle =True)
 env.start()
 while True:
     move_action = random.randint(0, 8)
