@@ -43,17 +43,30 @@ parser.add_argument('--no-shared', default=False,
 parser.add_argument('--use_gpu', default=False,
                     help='use gpu to train something')
 parser.add_argument('--play_sf', default=False,type=bool,
-                    help='use an optimizer without shared momentum.')
+                    help='play sfiii3n')
+parser.add_argument('--roms', default='/ssd/su/sfiiia-a3c/roms/',type=str,
+                    help='dir roms')
+parser.add_argument('--save_per_min', default=30,type=int,
+                    help='train x minutes and save a checkpoint')
+parser.add_argument('--model_path', default='../models/',type=str)
+parser.add_argument('--mode', default='train',type=str,choices=['train','test','PvP'])
+parser.add_argument('--test_from', default='',type=str)
+parser.add_argument('--device', default='server',type=str,choices=['server','laptop'])
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    os.environ['OMP_NUM_THREADS'] = '1'
-    os.environ['CUDA_VISIBLE_DEVICES'] = "0" if args.use_gpu else ""
+    if args.device == 'server':
+        os.environ['OMP_NUM_THREADS'] = '1'
+        os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3" if args.use_gpu else ""
+        os.system("Xvfb :1 -screen 1 800x600x16 +extension RANDR &")
+        os.environ["DISPLAY"] = ":1"
     torch.manual_seed(args.seed)
     if args.play_sf:
         print('Play sfiii3n!')
         shared_model = ActorCritic(3, 9*10)
+        if args.test_from != "":
+            shared_model.load_state_dict(torch.load(args.test_from))
     else:
         env = create_atari_env(args.env_name)
         shared_model = ActorCritic(
@@ -76,9 +89,10 @@ if __name__ == '__main__':
     p.start()
     processes.append(p)
 
-    for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
-        p.start()
-        processes.append(p)
+    if args.mode == 'train':
+        for rank in range(0, args.num_processes):
+            p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
+            p.start()
+            processes.append(p)
     for p in processes:
         p.join()

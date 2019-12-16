@@ -14,8 +14,11 @@ def test(rank, args, shared_model, counter):
     torch.manual_seed(args.seed + rank)
 
     if args.play_sf:
-        roms_path = "/home/sujinhua/app/sfiiia-a3c/roms/"  # Replace this with the path to your ROMs
-        env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =False)
+        roms_path = args.roms  # Replace this with the path to your ROMs
+        if args.mode == 'PvP':
+            env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =True)
+        else:
+            env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =False)
         model = ActorCritic(3, 9*10)
         env.start()
         state, reward, round_done, stage_done, done = env.step(8, 9)
@@ -35,6 +38,7 @@ def test(rank, args, shared_model, counter):
     # a quick hack to prevent the agent from stucking
     actions = deque(maxlen=100)
     episode_length = 0
+    step = 0
     while True:
         episode_length += 1
         # Sync with the shared model
@@ -51,7 +55,7 @@ def test(rank, args, shared_model, counter):
         prob = F.softmax(logit, dim=-1)
         action = prob.max(1, keepdim=True)[1].numpy()
         if args.play_sf:
-            action_id = action.numpy()[0,0]
+            action_id = action[0,0]
             move_action, attack_action = action_id//10,action_id%10
             state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
             reward = reward['P1']
@@ -75,15 +79,20 @@ def test(rank, args, shared_model, counter):
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length))
+            step += 1
+            if args.mode == 'train' and step % args.save_per_min == 0:
+                print('saving model params at step %s' % step)
+                torch.save(shared_model.state_dict(),'%smodel_params_step_%s.pkl' %(args.model_path,step))
             reward_sum = 0
             episode_length = 0
             actions.clear()
             if args.play_sf:
                 env.new_game()
                 state, reward, round_done, stage_done, done = env.step(8, 9)
-                reward = torch.tensor(reward['P1'],requires_grad =True)
+                state = state.T
+                reward = reward['P1']
             else:
                 state = env.reset()
-            time.sleep(60)
-
+            if args.mode == 'train':
+                time.sleep(60)
         state =  torch.from_numpy(state)
