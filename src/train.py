@@ -80,9 +80,11 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                 state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
                 state = state.T
                 reward = reward['P1']
+                if done:
+                    env.new_game()
                 if stage_done:
                     env.next_stage()
-                elif round_done:
+                if round_done:
                     env.next_round()
             else:
                 state, reward, done, _ = env.step(action.numpy())
@@ -95,7 +97,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                 episode_length = 0
                 if args.play_sf:
                     env.new_game()
-                    state, reward, round_done, stage_done, done = env.step(8, 9)
+                    state, reward, round_done, stage_done, _ = env.step(8, 9)
                     state = state.T
                     reward = reward['P1']
                 else:

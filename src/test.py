@@ -60,9 +60,11 @@ def test(rank, args, shared_model, counter):
             state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
             reward = reward['P1']
             state = state.T
+            if done:
+                env.new_game()
             if stage_done:
                 env.next_stage()
-            elif round_done:
+            if round_done:
                 env.next_round()
         else:
             state, reward, done, _ = env.step(action[0, 0])
