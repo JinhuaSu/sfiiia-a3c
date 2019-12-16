@@ -42,17 +42,25 @@ parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--use_gpu', default=False,
                     help='use gpu to train something')
-parser.add_argument('--play_sf', default=False,type=bool,
+parser.add_argument('--play_sf', default=True,type=bool,
                     help='play sfiii3n')
 parser.add_argument('--roms', default='/ssd/su/sfiiia-a3c/roms/',type=str,
                     help='dir roms')
-parser.add_argument('--save_per_min', default=30,type=int,
+parser.add_argument('--save_per_min', default=5,type=int,
                     help='train x minutes and save a checkpoint')
 parser.add_argument('--model_path', default='../models/',type=str)
+
 parser.add_argument('--mode', default='train',type=str,choices=['train','test','PvP'])
+
 parser.add_argument('--test_from', default='',type=str)
+
 parser.add_argument('--device', default='server',type=str,choices=['server','laptop'])
 
+parser.add_argument('--log_path', default='../logs/',type=str)
+
+parser.add_argument('--reward_mode', default='baseline',type=str,choices=['baseline'])
+
+parser.add_argument('--difficulty', default=5,type=int)
 
 if __name__ == '__main__':
     args = parser.parse_args()

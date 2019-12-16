@@ -63,7 +63,6 @@ class ActorCritic(torch.nn.Module):
         x = F.elu(self.conv4(x))
 
         x = x.view(-1, 10752)
-        print('x',x.shape)
         hx, cx = self.lstm(x, (hx, cx))
         x = hx
 

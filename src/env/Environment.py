@@ -204,9 +204,6 @@ class Environment(object):
         p1_diff = (self.expected_health["P1"] - data["healthP1"])
         p2_diff = (self.expected_health["P2"] - data["healthP2"])
         self.expected_health = {"P1": data["healthP1"], "P2": data["healthP2"]}
-        print('expected+health',self.expected_health)
-        print('p1_diff',p1_diff)
-        print('p2_diff',p2_diff)
 
         rewards = {
             "P1": (p2_diff-p1_diff),

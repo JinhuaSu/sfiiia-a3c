@@ -16,9 +16,9 @@ def test(rank, args, shared_model, counter):
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         if args.mode == 'PvP':
-            env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =True)
+            env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =True)
         else:
-            env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =False)
+            env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
         model = ActorCritic(3, 9*10)
         env.start()
         state, reward, round_done, stage_done, done = env.step(8, 9)

@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-
+from tensorboardX import SummaryWriter
 from env.Environment import Environment
 from env.envs import create_atari_env
 from models.model import ActorCritic
@@ -16,11 +16,12 @@ def ensure_shared_grads(model, shared_model):
 
 
 def train(rank, args, shared_model, counter, lock, optimizer=None):
+    writer = SummaryWriter(log_dir=args.log_path)
     torch.manual_seed(args.seed + rank)
 
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
-        env = Environment("env"+str(rank), roms_path,frame_ratio =3,frames_per_step = 1,throttle =False)
+        env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
         model = ActorCritic(3, 9*10)
         env.start()
     else:
@@ -43,6 +44,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
     done = True
 
     episode_length = 0
+    epoch = 0
     while True:
         # Sync with the shared model
         model.load_state_dict(shared_model.state_dict())
@@ -59,10 +61,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         entropies = []
 
         for step in range(args.num_steps):
-            print('step',step)
             episode_length += 1
-            print(state.unsqueeze(0).shape)
-            print(state.unsqueeze(0).dtype)
             
             value, logit, (hx, cx) = model((state.float().unsqueeze(0),
                                             (hx, cx)))
@@ -134,7 +133,12 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                 log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
 
         optimizer.zero_grad()
-
+        epoch += 1 
+        writer.add_scalars(args.reward_mode+'/loss_group',\
+                                                {'policy_loss':policy_loss,\
+                                                'value_loss':value_loss,\
+                                                'total_loss':policy_loss + args.value_loss_coef * value_loss
+},epoch)
         (policy_loss + args.value_loss_coef * value_loss).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
