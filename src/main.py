@@ -41,8 +41,8 @@ parser.add_argument('--env-name', default='PongDeterministic-v4',
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--use_gpu', default=False,
-                    help='use an optimizer without shared momentum.')
-parser.add_argument('--play_sf', default=False,
+                    help='use gpu to train something')
+parser.add_argument('--play_sf', default=False,type=bool,
                     help='use an optimizer without shared momentum.')
 
 
@@ -51,9 +51,13 @@ if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = "0" if args.use_gpu else ""
     torch.manual_seed(args.seed)
-    env = create_atari_env(args.env_name)
-    shared_model = ActorCritic(
-        env.observation_space.shape[0], env.action_space)
+    if args.play_sf:
+        print('Play sfiii3n!')
+        shared_model = ActorCritic(3, 9*10)
+    else:
+        env = create_atari_env(args.env_name)
+        shared_model = ActorCritic(
+        env.observation_space.shape[0], env.action_space.n)
     shared_model.share_memory()
 
 
@@ -65,7 +69,7 @@ if __name__ == '__main__':
 
     processes = []
 
-    counter = mp.Value('i', 0)
+    counter = mp.Value('i', 0) #pytorch mutliprocess tool
     lock = mp.Lock()
 
     p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
