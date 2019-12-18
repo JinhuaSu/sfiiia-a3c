@@ -12,6 +12,12 @@ from models.model import ActorCritic
 from test import test
 from train import train
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:raise argparse.ArgumentTypeError('Boolean value expected.')
 # Based on
 # https://github.com/pytorch/examples/tree/master/mnist_hogwild
 # Training settings
@@ -58,11 +64,11 @@ parser.add_argument('--device', default='server',type=str,choices=['server','lap
 
 parser.add_argument('--log_path', default='../logs/',type=str)
 
-parser.add_argument('--reward_mode', default='baseline',type=str,choices=['P1','absolute_diff'])
+parser.add_argument('--reward_mode', default='P1',type=str,choices=['P1','absolute_diff'])
 
 parser.add_argument('--difficulty', default=5,type=int)
 
-parser.add_argument('--throttle', default=False,type=bool)
+parser.add_argument('--throttle', default=True,type=str2bool)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -74,7 +80,7 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
     if args.play_sf:
         print('Play sfiii3n!')
-        shared_model = ActorCritic(3, 9*10)
+        shared_model = ActorCritic(3, 9*10+17)
         if args.test_from != "":
             shared_model.load_state_dict(torch.load(args.test_from))
     else:

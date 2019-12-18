@@ -16,11 +16,11 @@ def test(rank, args, shared_model, counter):
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         if args.mode == 'PvP':
-            print('PvP throttle:%s',args.throttle)
-            env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
+            print('PvP throttle:%s'%args.throttle)
+            env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =args.throttle)
         else:
             env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
-        model = ActorCritic(3, 9*10)
+        model = ActorCritic(3, 9*10+17)
         env.start()
         state, reward, round_done, stage_done, done = env.step(8, 9)
         state = state.T
@@ -57,8 +57,10 @@ def test(rank, args, shared_model, counter):
         action = prob.max(1, keepdim=True)[1].numpy()
         if args.play_sf:
             action_id = action[0,0]
-            move_action, attack_action = action_id//10,action_id%10
-            print(move_action,attack_action)
+            if action_id < 90:
+                move_action, attack_action = action_id//10,action_id%10
+            else:
+                move_action, attack_action = -1,action_id%90
             state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
             reward = reward[args.reward_mode]
             state = state.T
@@ -86,7 +88,7 @@ def test(rank, args, shared_model, counter):
             step += 1
             if args.mode == 'train' and step % args.save_per_min == 0:
                 print('saving model params at step %s' % step)
-                torch.save(shared_model.state_dict(),'%smodel_params_step_%s.pkl' %(args.model_path,step))
+                torch.save(shared_model.state_dict(),'%s/model_params_step_%s.pkl' %(args.model_path+args.reward_mode,step))
             reward_sum = 0
             episode_length = 0
             actions.clear()
@@ -98,5 +100,6 @@ def test(rank, args, shared_model, counter):
             else:
                 state = env.reset()
             if args.mode == 'train':
+                print('test mode sleep for 60 seconds')
                 time.sleep(60)
         state =  torch.from_numpy(state)

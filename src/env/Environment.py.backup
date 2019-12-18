@@ -219,12 +219,18 @@ class Environment(object):
         if self.started:
             if not self.round_done and not self.stage_done and not self.game_done:
                 actions = []
-                if move_action >= 0:
+                if random.random() > 1:
                     actions += index_to_move_action(move_action)
                     actions += index_to_attack_action(attack_action)
                     data = self.gather_frames(actions)
                 else:
-                    data = self.super_act(attack_action)   
+                    print('use super act')
+                    data = self.gather_frames(index_to_move_action(6))
+                    data = self.gather_frames(index_to_move_action(5))
+                    data = self.gather_frames(index_to_move_action(4))
+                    data = self.gather_frames(index_to_attack_action(2))
+                    #actions += index_to_super_act(int(random.random()*100)%1)
+                print(actions)
                 data = self.check_done(data)
                 return data["frame"], data["rewards"], self.round_done, self.stage_done, self.game_done
             else:
@@ -235,95 +241,3 @@ class Environment(object):
     # Safely closes emulator
     def close(self):
         self.emu.close()
-    def super_act(self,action_id):
-        data = 0
-        if action_id==0:  #xicu
-            data = self.gather_frames(index_to_attack_action(8))
-        if action_id==1:  #beifutou
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(0))
-            data = self.gather_frames(index_to_attack_action(4))
-        if action_id==2:  #diyuche
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(0))
-            data = self.gather_frames(index_to_attack_action(4))
-        if action_id==3: #tajinqiancu_qian
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(5))
-        if action_id==4: #tajinhoucu_hou
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(5))
-        if action_id==5: #zidian_qian
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(6))
-        if action_id==6: #zidian_hou
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(6))
-        if action_id==7: #bodongquan_qian
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(0))
-        if action_id==8: #bodongquan_hou
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(0))
-        if action_id==9: #shenglongquan_qian
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_attack_action(0))
-        if action_id==10: #shenglongquan_hou
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_attack_action(0))
-        if action_id==11: #longjuan_qian
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(4))
-        if action_id==12: #longjuan_hou
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(4))
-        if action_id==13: #SAI_qian
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(0))
-        if action_id==14: #SAI_hou
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(0))
-        if action_id==15: #SAII_qian
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(5))
-            data = self.gather_frames(index_to_move_action(4))
-            data = self.gather_frames(index_to_attack_action(7))
-        if action_id==16: #SAII_hou
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_move_action(6))
-            data = self.gather_frames(index_to_move_action(7))
-            data = self.gather_frames(index_to_move_action(0))
-            data = self.gather_frames(index_to_attack_action(7))
-
-        return data
-
-
-
-

@@ -22,7 +22,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
-        model = ActorCritic(3, 9*10)
+        model = ActorCritic(3, 9*10+17)
         env.start()
         time_loss_l = []
         time_count = 0
@@ -78,18 +78,25 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
             if args.play_sf:
                 action_id = action.numpy()[0,0]
-                move_action, attack_action = action_id//10,action_id%10
+                if action_id < 90:
+                    move_action, attack_action = action_id//10,action_id%10
+                else:
+                    move_action, attack_action = -1,action_id%90
                 state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
                 state = state.T
                 reward = reward[args.reward_mode]
+                reward -= time_count % 60
                 if done:
                     env.new_game()
-                    time_loss_l = []
-                    time_count = 0
+                    time_count == 0
+                    reward -= 200
                 if stage_done:
                     env.next_stage()
+                    time_count == 0
+                    reward += 200
                 if round_done:
                     env.next_round()
+                    time_count == 0
             else:
                 state, reward, done, _ = env.step(action.numpy())
                 reward = max(min(reward, 1), -1)
@@ -130,7 +137,6 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             r = args.gamma * r + rewards[i]
             advantage = r - values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
-            time_loss = time_loss + 0.5 * (time_loss_l[i]-30).pow(2)
 
             # generalized advantage estimation
             delta_t = rewards[i] + args.gamma * \
