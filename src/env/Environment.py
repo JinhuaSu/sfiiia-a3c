@@ -30,8 +30,8 @@ def index_to_super_act(action):
         2: index_to_move_action(4) + index_to_move_action(7) + index_to_move_action(0) +  index_to_attack_action(4) ,
         3: index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_attack_action(0) ,
         4: index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_attack_action(4) ,
-        4: index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_attack_action(7) ,
-        5: []
+        5: index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_move_action(6) + index_to_move_action(5) + index_to_move_action(4) + index_to_attack_action(7) ,
+        6: []
     }[action]
 
 
@@ -206,6 +206,7 @@ class Environment(object):
         self.expected_health = {"P1": data["healthP1"], "P2": data["healthP2"]}
 
         rewards = {
+            "absolute_diff":data["healthP1"] - data["healthP2"]
             "P1": (p2_diff-p1_diff),
             "P2": (p1_diff-p2_diff)
         }
@@ -222,7 +223,7 @@ class Environment(object):
                     actions += index_to_move_action(move_action)
                     actions += index_to_attack_action(attack_action)
                 else:
-                    actions += index_to_super_act((move_action + attack_action)%6)
+                    actions += index_to_super_act(int(100*random.random())%7)
                 data = self.gather_frames(actions)
                 data = self.check_done(data)
                 return data["frame"], data["rewards"], self.round_done, self.stage_done, self.game_done

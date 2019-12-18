@@ -16,7 +16,8 @@ def test(rank, args, shared_model, counter):
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         if args.mode == 'PvP':
-            env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =True)
+            print('PvP throttle:%s',args.throttle)
+            env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
         else:
             env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
         model = ActorCritic(3, 9*10)
@@ -57,8 +58,9 @@ def test(rank, args, shared_model, counter):
         if args.play_sf:
             action_id = action[0,0]
             move_action, attack_action = action_id//10,action_id%10
+            print(move_action,attack_action)
             state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
-            reward = reward['P1']
+            reward = reward[args.reward_mode]
             state = state.T
             if done:
                 env.new_game()
@@ -73,7 +75,7 @@ def test(rank, args, shared_model, counter):
 
         # a quick hack to prevent the agent from stucking
         actions.append(action[0, 0])
-        if actions.count(actions[0]) == actions.maxlen:
+        if args.mode == 'train' and actions.count(actions[0]) == actions.maxlen:
             done = True
         if done:
             print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
@@ -92,7 +94,7 @@ def test(rank, args, shared_model, counter):
                 env.new_game()
                 state, reward, round_done, stage_done, done = env.step(8, 9)
                 state = state.T
-                reward = reward['P1']
+                reward = reward[args.reward_mode]
             else:
                 state = env.reset()
             if args.mode == 'train':

@@ -58,9 +58,11 @@ parser.add_argument('--device', default='server',type=str,choices=['server','lap
 
 parser.add_argument('--log_path', default='../logs/',type=str)
 
-parser.add_argument('--reward_mode', default='baseline',type=str,choices=['baseline'])
+parser.add_argument('--reward_mode', default='baseline',type=str,choices=['P1','absolute_diff'])
 
 parser.add_argument('--difficulty', default=5,type=int)
+
+parser.add_argument('--throttle', default=False,type=bool)
 
 if __name__ == '__main__':
     args = parser.parse_args()

@@ -24,6 +24,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
         model = ActorCritic(3, 9*10)
         env.start()
+        time_loss_l = []
+        time_count = 0
     else:
         env = create_atari_env(args.env_name)
         env.seed(args.seed + rank)
@@ -61,6 +63,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         entropies = []
 
         for step in range(args.num_steps):
+            time_count += 1
             episode_length += 1
             
             value, logit, (hx, cx) = model((state.float().unsqueeze(0),
@@ -78,9 +81,11 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                 move_action, attack_action = action_id//10,action_id%10
                 state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
                 state = state.T
-                reward = reward['P1']
+                reward = reward[args.reward_mode]
                 if done:
                     env.new_game()
+                    time_loss_l = []
+                    time_count = 0
                 if stage_done:
                     env.next_stage()
                 if round_done:
@@ -98,11 +103,12 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                     env.new_game()
                     state, reward, round_done, stage_done, _ = env.step(8, 9)
                     state = state.T
-                    reward = reward['P1']
+                    reward = reward[args.reward_mode]
                 else:
                     state = env.reset()
             state = torch.from_numpy(state)
             values.append(value)
+            time_loss_l.append(time_count)
             log_probs.append(log_prob)
             rewards.append(reward)
 
@@ -118,11 +124,13 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         values.append(r)
         policy_loss = 0
         value_loss = 0
+        time_loss = 0
         gae = torch.zeros(1, 1)
         for i in reversed(range(len(rewards))):
             r = args.gamma * r + rewards[i]
             advantage = r - values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
+            time_loss = time_loss + 0.5 * (time_loss_l[i]-30).pow(2)
 
             # generalized advantage estimation
             delta_t = rewards[i] + args.gamma * \
@@ -134,9 +142,10 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
         optimizer.zero_grad()
         epoch += 1 
-        writer.add_scalars(args.reward_mode+'/loss_group',\
+        writer.add_scalars(args.reward_mode+'/%sloss_group'%rank,\
                                                 {'policy_loss':policy_loss,\
                                                 'value_loss':value_loss,\
+                                                'time_loss':time_loss,\
                                                 'total_loss':policy_loss + args.value_loss_coef * value_loss
 },epoch)
         (policy_loss + args.value_loss_coef * value_loss).backward()
