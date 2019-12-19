@@ -12,20 +12,21 @@ def ensure_shared_grads(model, shared_model):
                                    shared_model.parameters()):
         if shared_param.grad is not None:
             return
-        shared_param._grad = param.grad
+        shared_param._grad = param.grad.cpu()
 
 
-def train(rank, args, shared_model, counter, lock, optimizer=None):
+def train(rank, args, shared_model,model, counter, lock, optimizer=None):
     writer = SummaryWriter(log_dir=args.log_path)
     torch.manual_seed(args.seed + rank)
+    device = args.use_gpu[rank%len(args.use_gpu)] if len(args.use_gpu) > 0 else -1
 
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
-        model = ActorCritic(3, 9*10+17)
+        #model = ActorCritic(3, 9*10+17,device)
         env.start()
         time_loss_l = []
-        time_count = 0
+        time_count = torch.tensor(0)
     else:
         env = create_atari_env(args.env_name)
         env.seed(args.seed + rank)
@@ -43,6 +44,9 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
     else:
         state, reward, round_done, stage_done, done = env.step(8, 9)
         state = torch.from_numpy(state.T)
+        if device >=0:
+            state = state.to(device)
+
     done = True
 
     episode_length = 0
@@ -53,6 +57,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         if done:#game done
             cx = torch.zeros(1, 256)
             hx = torch.zeros(1, 256)
+            if device >= 0:
+                cx,hx = cx.to(device),hx.to(device)
         else:
             cx = cx.detach()
             hx = hx.detach()
@@ -77,13 +83,14 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             log_prob = log_prob.gather(1, action)
 
             if args.play_sf:
-                action_id = action.numpy()[0,0]
+                action_id = action.cpu().numpy()[0,0]
                 if action_id < 90:
                     move_action, attack_action = action_id//10,action_id%10
                 else:
                     move_action, attack_action = -1,action_id%90
                 state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
                 state = state.T
+
                 reward = reward[args.reward_mode]
                 reward -= time_count % 60
                 if done:
@@ -114,8 +121,15 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
                 else:
                     state = env.reset()
             state = torch.from_numpy(state)
+            if device >=0:
+                state = state.to(device)
+                reward = torch.tensor(reward)
+                reward = reward.to(device)
+                value = value.to(device)
+                log_prob= log_prob.to(device)
+
             values.append(value)
-            time_loss_l.append(time_count)
+            time_loss_l.append(time_count.to(device))
             log_probs.append(log_prob)
             rewards.append(reward)
 
@@ -126,6 +140,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         if not done:
             value, _, _ = model((state.float().unsqueeze(0), (hx, cx)))
             r = value.detach()
+        if device >=0:
+            r = r.to(device)
 
 
         values.append(r)
@@ -133,6 +149,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
         value_loss = 0
         time_loss = 0
         gae = torch.zeros(1, 1)
+        if device >=0:
+            gae=gae.to(device)
         for i in reversed(range(len(rewards))):
             r = args.gamma * r + rewards[i]
             advantage = r - values[i]

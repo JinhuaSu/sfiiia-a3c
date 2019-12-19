@@ -10,9 +10,11 @@ from env.Environment import Environment
 
 #I must get totally known about the whole structure of the model. And I should have a taste or VITA tea to control my baozou feelings
 
-def test(rank, args, shared_model, counter):
+def test(rank, args, shared_model,model, counter):
     torch.manual_seed(args.seed + rank)
 
+    device = args.use_gpu[rank%len(args.use_gpu)] if len(args.use_gpu) > 0 else -1
+    device = 0
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         if args.mode == 'PvP':
@@ -20,7 +22,6 @@ def test(rank, args, shared_model, counter):
             env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =args.throttle)
         else:
             env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
-        model = ActorCritic(3, 9*10+17)
         env.start()
         state, reward, round_done, stage_done, done = env.step(8, 9)
         state = state.T
@@ -31,6 +32,8 @@ def test(rank, args, shared_model, counter):
         state = env.reset()
     model.eval()
     state = torch.from_numpy(state)
+    if device >=0:
+        state = state.to(device)
     reward_sum = 0
     done = True
 
@@ -47,6 +50,9 @@ def test(rank, args, shared_model, counter):
             model.load_state_dict(shared_model.state_dict())
             cx = torch.zeros(1, 256)
             hx = torch.zeros(1, 256)
+            if device >=0:
+                cx = cx.to(device)
+                hx = hx.to(device)
         else:
             cx = cx.detach()
             hx = hx.detach()
@@ -54,7 +60,7 @@ def test(rank, args, shared_model, counter):
         with torch.no_grad():
             value, logit, (hx, cx) = model((state.float().unsqueeze(0), (hx, cx)))
         prob = F.softmax(logit, dim=-1)
-        action = prob.max(1, keepdim=True)[1].numpy()
+        action = prob.max(1, keepdim=True)[1].cpu().numpy()
         if args.play_sf:
             action_id = action[0,0]
             if action_id < 90:
@@ -103,3 +109,8 @@ def test(rank, args, shared_model, counter):
                 print('test mode sleep for 60 seconds')
                 time.sleep(60)
         state =  torch.from_numpy(state)
+        
+        if device >=0:
+            state = state.to(device)
+            reward = torch.tensor(reward)
+            reward = reward.to(device)

@@ -4,9 +4,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def normalized_columns_initializer(weights, std=1.0):
+def normalized_columns_initializer(weights,device,std=1.0):
     out = torch.randn(weights.size())
     out *= std / torch.sqrt(out.pow(2).sum(1, keepdim=True))
+    if device >= 0:
+        out = out.to(device)
     return out
 
 
@@ -29,8 +31,10 @@ def weights_init(m):
 
 
 class ActorCritic(torch.nn.Module):
-    def __init__(self, num_inputs, num_outputs):
+    def __init__(self, num_inputs, num_outputs,device):
         super(ActorCritic, self).__init__()
+        self.device = device
+        print(device)
         self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1) # how 
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
@@ -45,16 +49,19 @@ class ActorCritic(torch.nn.Module):
 
         self.apply(weights_init)
         self.actor_linear.weight.data = normalized_columns_initializer(
-            self.actor_linear.weight.data, 0.01)
+            self.actor_linear.weight.data,self.device, 0.01)
         self.actor_linear.bias.data.fill_(0)
         self.critic_linear.weight.data = normalized_columns_initializer(
-            self.critic_linear.weight.data, 1.0)
+            self.critic_linear.weight.data,self.device, 1.0)
         self.critic_linear.bias.data.fill_(0)
 
         self.lstm.bias_ih.data.fill_(0)
         self.lstm.bias_hh.data.fill_(0)
-
         self.train()
+        if self.device != -1:
+            self.conv1.to(device)
+            self.to(self.device)
+            print('to_gpu')
 
     def forward(self, inputs): # origion (1,1,42,42)
         inputs, (hx, cx) = inputs
