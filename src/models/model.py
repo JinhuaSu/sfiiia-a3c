@@ -39,13 +39,12 @@ class ActorCritic(torch.nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1) # how 
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv5 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
 
         self.num_outputs = num_outputs
-        self.lstm = nn.LSTMCell(32*12*7, 256)
+        self.lstm = nn.LSTMCell(32*12*7*4, 1024)
 
-        self.critic_linear = nn.Linear(256, 1)
-        self.actor_linear = nn.Linear(256, num_outputs)
+        self.critic_linear = nn.Linear(1024, 1)
+        self.actor_linear = nn.Linear(1024, num_outputs)
 
         self.apply(weights_init)
         self.actor_linear.weight.data = normalized_columns_initializer(
@@ -69,9 +68,8 @@ class ActorCritic(torch.nn.Module):
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
         x = F.elu(self.conv4(x))
-        x = F.elu(self.conv5(x))
 
-        x = x.view(-1, 32*12*7)
+        x = x.view(-1, 32*12*7*4)
         hx, cx = self.lstm(x, (hx, cx))
         x = hx
 

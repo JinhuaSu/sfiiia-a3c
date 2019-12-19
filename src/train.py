@@ -55,8 +55,8 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
         # Sync with the shared model
         model.load_state_dict(shared_model.state_dict())
         if done:#game done
-            cx = torch.zeros(1, 256)
-            hx = torch.zeros(1, 256)
+            cx = torch.zeros(1, 1024)
+            hx = torch.zeros(1, 1024)
             if device >= 0:
                 cx,hx = cx.to(device),hx.to(device)
         else:
@@ -107,7 +107,7 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
             else:
                 state, reward, done, _ = env.step(action.numpy())
                 reward = max(min(reward, 1), -1)
-            done = done or episode_length >= args.max_episode_length
+            #done = done
             with lock:
                 counter.value += 1
 
@@ -136,12 +136,12 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
             if done:
                     break
 
-        R = torch.zeros(1, 1)
+        #R = torch.zeros(1, 1)
         if not done:
             value, _, _ = model((state.float().unsqueeze(0), (hx, cx)))
             r = value.detach()
-        if device >=0:
-            r = r.to(device)
+            if device >=0:
+                r = r.to(device)
 
 
         values.append(r)
