@@ -31,7 +31,6 @@ def test(rank, args, shared_model,model, counter):
         model = ActorCritic(env.observation_space.shape[0], env.action_space.n)
         state = env.reset()
     model.eval()
-    #model.train()
     state = torch.from_numpy(state)
     if device >=0:
         state = state.to(device)
@@ -47,6 +46,8 @@ def test(rank, args, shared_model,model, counter):
     while True:
         # Sync with the shared model
         if done: 
+            num_stage = 0
+            print('test start!')
             model.load_state_dict(shared_model.state_dict())
             cx = torch.zeros(1, 1024)
             hx = torch.zeros(1, 1024)
@@ -60,9 +61,10 @@ def test(rank, args, shared_model,model, counter):
         with torch.no_grad():
             value, logit, (hx, cx) = model((state.float().unsqueeze(0), (hx, cx)))
         prob = F.softmax(logit, dim=-1)
-        action = prob.max(1, keepdim=True)[1].cpu().numpy()
+        action = prob.multinomial(num_samples=1).detach()
+        #action = prob.max(1, keepdim=True)[1].cpu().numpy()
         if args.play_sf:
-            action_id = action[0,0]
+            action_id = action.cpu().numpy()[0,0]
             if action_id < 90:
                 move_action, attack_action = action_id//10,action_id%10
             else:
@@ -73,6 +75,7 @@ def test(rank, args, shared_model,model, counter):
             if done:
                 env.new_game()
             if stage_done:
+                num_stage  += 1
                 env.next_stage()
             if round_done:
                 env.next_round()
@@ -85,11 +88,11 @@ def test(rank, args, shared_model,model, counter):
         #if args.mode == 'train' and actions.count(actions[0]) == actions.maxlen:
         #    done = True
         if done:
-            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
+            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}, win_stage_num {}".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
-                reward_sum, episode_length))
+                reward_sum, episode_length,num_stage))
             step += 1
             if args.mode == 'train' and step % args.save_per_min == 0:
                 print('saving model params at step %s' % step)
@@ -99,7 +102,7 @@ def test(rank, args, shared_model,model, counter):
             actions.clear()
             if args.play_sf:
                 env.new_game()
-                state, reward, round_done, stage_done, done = env.step(8, 9)
+                state, reward, _, _, _ = env.step(8, 9)
                 state = state.T
                 reward = reward[args.reward_mode]
             else:

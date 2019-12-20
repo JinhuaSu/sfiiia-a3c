@@ -23,7 +23,6 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
     if args.play_sf:
         roms_path = args.roms  # Replace this with the path to your ROMs
         env = Environment("env"+str(rank), roms_path,difficulty=args.difficulty,frame_ratio =3,frames_per_step = 1,throttle =False)
-        #model = ActorCritic(3, 9*10+17,device)
         env.start()
         time_loss_l = []
         time_count = torch.tensor(0)
@@ -51,10 +50,14 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
 
     episode_length = 0
     epoch = 0
+    num_stage = 0
     while True:
         # Sync with the shared model
-        model.load_state_dict(shared_model.state_dict())
         if done:#game done
+            print('log win stage')
+            #writer.add_scalars(args.reward_mode+'/%sloss_group'%rank,{'num_stage':num_stage},epoch)
+            num_stage = 0
+            model.load_state_dict(shared_model.state_dict())
             cx = torch.zeros(1, 1024)
             hx = torch.zeros(1, 1024)
             if device >= 0:
@@ -99,15 +102,15 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
                     reward -= 200
                 if stage_done:
                     env.next_stage()
+                    num_stage += 1
                     time_count == 0
-                    reward += 200
+                    reward += 200*num_stage
                 if round_done:
                     env.next_round()
                     time_count == 0
             else:
                 state, reward, done, _ = env.step(action.numpy())
                 reward = max(min(reward, 1), -1)
-            #done = done
             with lock:
                 counter.value += 1
 
@@ -166,11 +169,13 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
 
         optimizer.zero_grad()
         epoch += 1 
-        writer.add_scalars(args.reward_mode+'/%sloss_group'%rank,\
+        if epoch % args.log_freq == 0:
+            writer.add_scalars(args.reward_mode+'/%sloss_group'%rank,\
                                                 {'policy_loss':policy_loss,\
                                                 'value_loss':value_loss,\
                                                 'time_loss':time_loss,\
-                                                'total_loss':policy_loss + args.value_loss_coef * value_loss
+                                                'total_loss':policy_loss + args.value_loss_coef * value_loss,
+                                                'num_stage':num_stage
 },epoch)
         (policy_loss + args.value_loss_coef * value_loss).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
