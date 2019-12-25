@@ -9,10 +9,12 @@ from models.model import ActorCritic
 from env.Environment import Environment
 
 #I must get totally known about the whole structure of the model. And I should have a taste or VITA tea to control my baozou feelings
+import scipy.misc
+
 
 def test(rank, args, shared_model,model, counter):
     torch.manual_seed(args.seed + rank)
-
+    save_img = True if args.img_path != "" else False
     device = args.use_gpu[rank%len(args.use_gpu)] if len(args.use_gpu) > 0 else -1
     device = 0
     if args.play_sf:
@@ -71,6 +73,8 @@ def test(rank, args, shared_model,model, counter):
                 move_action, attack_action = -1,action_id%90
             state, reward, round_done, stage_done, done = env.step(move_action, attack_action)
             reward = reward[args.reward_mode]
+            if save_img and step == 0:
+                scipy.misc.toimage(state).save(args.img_path+'action(%s)_%s.png'%(action_id,episode_length))#保存图像
             state = state.T
             if done:
                 env.new_game()

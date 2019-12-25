@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+import pickle
 from tensorboardX import SummaryWriter
 from env.Environment import Environment
 from env.envs import create_atari_env
@@ -45,6 +46,9 @@ def train(rank, args, shared_model,model, counter, lock, optimizer=None):
         state = torch.from_numpy(state.T)
         if device >=0:
             state = state.to(device)
+    dummy_inputs = (state.float().unsqueeze(0), (torch.zeros(1, 1024).to(device), torch.zeros(1, 1024).to(device)))
+    model.load_state_dict(shared_model.state_dict())
+    writer.add_graph(model, (dummy_inputs,))
 
     done = True
 

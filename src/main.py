@@ -106,6 +106,8 @@ parser.add_argument('--difficulty', default=5,type=int)
 
 parser.add_argument('--log_freq', default=10,type=int)
 
+parser.add_argument('--img_path', default='../images/',type=str)
+
 parser.add_argument('--throttle', default=True,type=str2bool)
 
 def multi_main(args):
@@ -154,6 +156,9 @@ if __name__ == '__main__':
         shared_model = ActorCritic(
         env.observation_space.shape[0], env.action_space.n)
     shared_model.share_memory()
+
+    if args.img_path != '' and os.path.exists(args.img_path) is False:
+        os.makedirs(args.img_path)
 
 
     if args.no_shared:

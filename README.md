@@ -20,9 +20,9 @@ python main.py
 
 | DDL | task | state |
 | :--: | :--: | :--: |
-| 2019-12-10 | read a3c code |  |
-| 2019-12-10 | make the game like gym.env |  |
-| 2019-12-15 | first demo |  |
+| 2019-12-10 | read a3c code | done |
+| 2019-12-10 | make the game like gym.env | done |
+| 2019-12-15 | first demo | done |
 
 **urgent**
 
@@ -44,3 +44,21 @@ done in 2019-12-10:01:09
 | xxxx | write a class py for reward(hierarchical) | xx |  |
 | x | make the windows can be pretty show | xx |  |
 | xxx | write a python can select different mode so that I can play with the our fighter | xx |  |
+
+**the story of king of fighter**
+
+- king I
+    + problem: no super act, no memory, small
+    + improve: 20M -> 1.2G, add super act to action list
+- king II
+    + problem: too much defence
+    + improve method: change the reward mode, add subprocess and train for 9 hours
+- king III
+    + a mature version: can fight 8 difficulty computer
+    + problem: not best hyperparameter
+    + improve: test and adjust the hyperparameter, 
+- king IV
+    + remove the unnecessary color context, and improve charater generalization
+    
+        - 
+
